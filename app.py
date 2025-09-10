@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import re
 import requests
+import os
 
 app = Flask(__name__)
 CORS(app)  # Permite solicitudes desde cualquier dominio
@@ -31,4 +32,6 @@ def get_videos():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))  # Fly asigna el puerto automáticamente
+    app.run(host="0.0.0.0", port=port)
+
