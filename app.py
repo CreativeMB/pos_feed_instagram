@@ -1,21 +1,19 @@
-import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import re
 import requests
 
 app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Servidor de extracción de videos activo ✅"
+CORS(app)  # Permite solicitudes desde cualquier dominio
 
 @app.route("/get-videos")
 def get_videos():
     url = request.args.get("url")
     if not url:
-        return jsonify({"error": "No se proporcionó URL"})
+        return jsonify({"error": "URL no proporcionada"}), 400
 
     try:
+        # Obtenemos el contenido de la página
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         }
@@ -23,15 +21,14 @@ def get_videos():
         r.raise_for_status()
         html = r.text
 
-        # Buscar enlaces .mp4, .mkv y .m3u8
-        pattern = r"https?://[^\s'\"<>]+?\.(?:mp4|mkv|m3u8)"
-        videos = re.findall(pattern, html)
-        videos = list(set(videos))  # Eliminar duplicados
+        # Buscamos enlaces de video (.mp4, .mkv, .m3u8)
+        videos = re.findall(r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)', html)
+        videos = list(set(videos))  # eliminamos duplicados
 
         return jsonify({"videos": videos})
-    except Exception as e:
-        return jsonify({"error": str(e)})
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=8080)
