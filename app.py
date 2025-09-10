@@ -1,33 +1,36 @@
 from flask import Flask, request, jsonify
 import requests
-from bs4 import BeautifulSoup
+import re
 
 app = Flask(__name__)
 
-@app.route("/get-videos")
+@app.route("/")
+def home():
+    return "Servidor de extracción de videos activo ✅"
+
+@app.route("/get-videos", methods=["GET"])
 def get_videos():
     url = request.args.get("url")
     if not url:
-        return jsonify({"error": "No URL provided"}), 400
+        return jsonify({"error": "No se proporcionó URL"}), 400
 
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, headers=headers, timeout=15)
-        soup = BeautifulSoup(r.text, "html.parser")
-        videos = []
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
+        r = requests.get(url, headers=headers, timeout=10)
+        r.raise_for_status()
+        html = r.text
 
-        # Extraer enlaces mp4, mkv, m3u8 de <a> y <source>
-        for tag in soup.find_all(["a", "source"], href=True):
-            if tag["href"].endswith((".mp4", ".mkv", ".m3u8")):
-                videos.append(tag["href"])
-        for tag in soup.find_all("source", src=True):
-            if tag["src"].endswith((".mp4", ".mkv", ".m3u8")):
-                videos.append(tag["src"])
+        # Extraer enlaces .mp4, .mkv y .m3u8
+        pattern = r"https?:\/\/[^\s'\"<>]+?\.(?:mp4|mkv|m3u8)"
+        videos = re.findall(pattern, html)
 
-        # Quitar duplicados
-        videos = list(set(videos))
+        if not videos:
+            return jsonify({"error": "No se encontraron videos"}), 404
+
         return jsonify({"videos": videos})
-    except Exception as e:
+    except requests.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
