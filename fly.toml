@@ -1,0 +1,13 @@
+app = "video-extractor"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[env]
+  PORT = "8080"
+
+[build]
+  image = "python:3.12-slim"
+
+[deploy]
+  release_command = ""
