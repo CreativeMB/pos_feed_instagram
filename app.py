@@ -4,7 +4,7 @@ import re
 import requests
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Permite solicitudes desde cualquier dominio
 
 @app.route("/get-videos")
 def get_videos():
@@ -17,11 +17,16 @@ def get_videos():
         r = requests.get(url, headers=headers, timeout=10)
         r.raise_for_status()
         html = r.text
+
         videos = re.findall(r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)', html)
         videos = list(set(videos))
         return jsonify({"videos": videos})
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
+
 
 
