@@ -4,13 +4,12 @@ import re
 import asyncio
 import os
 import nest_asyncio
-import urllib.parse
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
-nest_asyncio.apply()  # Permite correr asyncio dentro de Flask
+nest_asyncio.apply()
 
 app = Flask(__name__)
-CORS(app)  # Permite solicitudes desde cualquier dominio
+CORS(app)
 
 VIDEO_PATTERN = r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)'
 
@@ -22,12 +21,12 @@ async def extract_videos(url: str):
         try:
             await page.goto(url, timeout=60000)
             await page.wait_for_load_state("networkidle")
-
-            # Extraer contenido HTML
+            
+            # Extraer videos directamente desde el HTML
             content = await page.content()
             videos.update(re.findall(VIDEO_PATTERN, content))
 
-            # Extraer de <video> y <source>
+            # Extraer de <video> y <source> dinámicos
             video_elements = await page.query_selector_all("video")
             for v in video_elements:
                 src = await v.get_attribute("src")
@@ -36,8 +35,8 @@ async def extract_videos(url: str):
                 for s in sources:
                     ssrc = await s.get_attribute("src")
                     if ssrc: videos.add(ssrc)
-
-            # Extra: enlaces de botones y divs
+            
+            # Extra: revisar todos los enlaces posibles de servidores (links de botones)
             server_buttons = await page.query_selector_all("a[href], button[data-video], div[data-video]")
             for btn in server_buttons:
                 try:
@@ -52,25 +51,8 @@ async def extract_videos(url: str):
             print(f"⚠ Error en extract_videos: {e}")
         finally:
             await browser.close()
-
-    # --- FILTRAR Y CORREGIR URLs ---
-    filtered_videos = []
-    for v in videos:
-        if "google.com/s2/favicons" in v:
-            # Extraer el parámetro domain_url si existe
-            parsed = urllib.parse.urlparse(v)
-            params = urllib.parse.parse_qs(parsed.query)
-            if "domain_url" in params:
-                real_url = params["domain_url"][0]
-                if re.search(r'\.(mp4|mkv|m3u8)', real_url):
-                    filtered_videos.append(real_url)
-        else:
-            if re.search(r'\.(mp4|mkv|m3u8)', v):
-                filtered_videos.append(v)
-
-    # Eliminar duplicados
-    return list(set(filtered_videos))
-
+    
+    return list(videos)
 
 @app.route("/get-videos")
 def get_videos():
@@ -86,7 +68,6 @@ def get_videos():
     except Exception as e:
         print(f"⚠ Error en get_videos: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
