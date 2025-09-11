@@ -62,18 +62,23 @@ async def extract_videos(url: str):
                     href = await btn.get_attribute("href")
                     if href and href.lower().endswith((".mp4", ".mkv", ".m3u8")):
                         videos.add(href)
-                    # Intentar click dinámico para cargar redirecciones
-                    await btn.click()
-                    await page.wait_for_load_state("networkidle")
-                    content_after = await page.content()
-                    for match in re.findall(VIDEO_PATTERN, content_after):
-                        if "favicon" not in match.lower():
-                            videos.add(match)
+
+                    # Intentar click dinámico solo si el botón es visible
+                    if await btn.is_visible():
+                        await btn.click(timeout=5000)
+                        await page.wait_for_load_state("networkidle")
+                        content_after = await page.content()
+                        for match in re.findall(VIDEO_PATTERN, content_after):
+                            if "favicon" not in match.lower():
+                                videos.add(match)
+                except PlaywrightTimeoutError:
+                    print("[WARN] Timeout al hacer click en un botón, se continúa")
+                    continue
                 except Exception as e:
                     print(f"[WARN] Error al procesar botón: {e}")
                     continue
 
-            # 4️⃣ Extra: Capturar variables JS dinámicas (ej. Megaup)
+            # 4️⃣ Extra: Capturar variables JS dinámicas
             try:
                 js_video = await page.evaluate("""
                     () => {
@@ -88,7 +93,7 @@ async def extract_videos(url: str):
                 """)
                 if js_video:
                     videos.update(js_video)
-            except:
+            except Exception:
                 pass
 
         except PlaywrightTimeoutError:
