@@ -12,11 +12,13 @@ nest_asyncio.apply()
 app = Flask(__name__)
 CORS(app)
 
+# Patrón para videos
 VIDEO_PATTERN = r'https?://[^\s"\'>]+?\.(?:mp4|mkv|m3u8)(?:\?[^"\'>\s]*)?'
 
 async def extract_videos(url: str):
     videos = set()
     print(f"[INFO] Iniciando extracción para: {url}")
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -60,9 +62,34 @@ async def extract_videos(url: str):
                     href = await btn.get_attribute("href")
                     if href and href.lower().endswith((".mp4", ".mkv", ".m3u8")):
                         videos.add(href)
+                    # Intentar click dinámico para cargar redirecciones
+                    await btn.click()
+                    await page.wait_for_load_state("networkidle")
+                    content_after = await page.content()
+                    for match in re.findall(VIDEO_PATTERN, content_after):
+                        if "favicon" not in match.lower():
+                            videos.add(match)
                 except Exception as e:
                     print(f"[WARN] Error al procesar botón: {e}")
                     continue
+
+            # 4️⃣ Extra: Capturar variables JS dinámicas (ej. Megaup)
+            try:
+                js_video = await page.evaluate("""
+                    () => {
+                        const vars = [];
+                        for(const key in window) {
+                            if(typeof window[key] === 'string' && window[key].match(/\\.mkv$|\\.mp4$|\\.m3u8$/)) {
+                                vars.push(window[key]);
+                            }
+                        }
+                        return vars;
+                    }
+                """)
+                if js_video:
+                    videos.update(js_video)
+            except:
+                pass
 
         except PlaywrightTimeoutError:
             print("⚠ Timeout al cargar la página")
@@ -71,7 +98,7 @@ async def extract_videos(url: str):
         finally:
             await browser.close()
             print(f"[INFO] Chromium cerrado. Se encontraron {len(videos)} videos")
-    
+
     return list(videos)
 
 @app.route("/get-videos")
