@@ -1,6 +1,5 @@
 FROM python:3.11-slim
 
-# Instalar librerías necesarias para Chromium
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -24,19 +23,12 @@ RUN apt-get update && apt-get install -y \
     wget curl gnupg ca-certificates fonts-liberation \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Carpeta de la app
 WORKDIR /app
 COPY . /app
 
-# Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Instalar Chromium para Playwright
 RUN playwright install chromium
 
-# Exponer el puerto asignado por Fly
 ENV PORT=8080
-
-# Comando principal
 CMD ["python3", "app.py"]
 
