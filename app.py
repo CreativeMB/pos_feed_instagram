@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import re
-import requests
 
 app = Flask(__name__)
-CORS(app)  # Permite solicitudes desde cualquier dominio
+CORS(app)
 
 @app.route("/get-videos")
 def get_videos():
@@ -13,25 +14,30 @@ def get_videos():
         return jsonify({"error": "URL no proporcionada"}), 400
 
     try:
-        # Obtenemos el contenido de la página
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        }
-        r = requests.get(url, headers=headers, timeout=10)
-        r.raise_for_status()
-        html = r.text
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
 
-        # Buscamos enlaces de video (.mp4, .mkv, .m3u8)
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.get(url)
+        
+        # Esperar un momento para que JS cargue los videos
+        driver.implicitly_wait(5)
+        
+        html = driver.page_source
+        driver.quit()
+
+        # Extraer enlaces de video
         videos = re.findall(r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)', html)
-        videos = list(set(videos))  # eliminamos duplicados
+        videos = list(set(videos))
 
         return jsonify({"videos": videos})
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Puerto 8080 porque Fly lo expone en ese puerto
     app.run(host="0.0.0.0", port=8080)
 
 
