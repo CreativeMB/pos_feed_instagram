@@ -15,7 +15,10 @@ CORS(app)
 # Patrón para videos
 VIDEO_PATTERN = r'https?://[^\s"\'>]+?\.(?:mp4|mkv|m3u8)(?:\?[^"\'>\s]*)?'
 
-async def extract_videos(url: str):
+async def extract_videos(url: str, depth=0):
+    """
+    depth: controla la recursividad para iframes (evita bucles infinitos)
+    """
     videos = set()
     print(f"[INFO] Iniciando extracción para: {url}")
 
@@ -55,30 +58,28 @@ async def extract_videos(url: str):
                     if ssrc and "favicon" not in ssrc.lower():
                         videos.add(ssrc)
 
-            # 3️⃣ Extraer links de botones o divs con video
-            buttons = await page.query_selector_all("a[href], button, div[data-video]")
+            # 3️⃣ Extraer links de botones o divs con video (sin hacer click que navegue)
+            buttons = await page.query_selector_all("a[href], div[data-video]")
             for btn in buttons:
                 try:
                     href = await btn.get_attribute("href")
                     if href and href.lower().endswith((".mp4", ".mkv", ".m3u8")):
                         videos.add(href)
-
-                    # Intentar click dinámico solo si el botón es visible
-                    if await btn.is_visible():
-                        await btn.click(timeout=5000)
-                        await page.wait_for_load_state("networkidle")
-                        content_after = await page.content()
-                        for match in re.findall(VIDEO_PATTERN, content_after):
-                            if "favicon" not in match.lower():
-                                videos.add(match)
-                except PlaywrightTimeoutError:
-                    print("[WARN] Timeout al hacer click en un botón, se continúa")
-                    continue
                 except Exception as e:
                     print(f"[WARN] Error al procesar botón: {e}")
                     continue
 
-            # 4️⃣ Extra: Capturar variables JS dinámicas
+            # 4️⃣ Extraer iframes recursivamente
+            if depth < 2:  # Limitar recursividad
+                iframes = await page.query_selector_all("iframe")
+                for iframe in iframes:
+                    src = await iframe.get_attribute("src")
+                    if src and src.startswith("http"):
+                        print(f"[INFO] Iframe detectado: {src}")
+                        iframe_videos = await extract_videos(src, depth + 1)
+                        videos.update(iframe_videos)
+
+            # 5️⃣ Extra: Capturar variables JS dinámicas
             try:
                 js_video = await page.evaluate("""
                     () => {
