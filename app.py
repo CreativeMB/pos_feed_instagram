@@ -11,7 +11,6 @@ nest_asyncio.apply()
 app = Flask(__name__)
 CORS(app)
 
-# Patrón solo para videos directos (.mp4, .mkv, .m3u8)
 VIDEO_PATTERN = r'https?://[^\s"\'>]+?\.(?:mp4|mkv|m3u8)(?:\?[^"\'>\s]*)?'
 
 async def extract_videos(url: str):
@@ -23,13 +22,13 @@ async def extract_videos(url: str):
             await page.goto(url, timeout=60000)
             await page.wait_for_load_state("networkidle")
 
-            # 1️⃣ Extraer videos directamente desde el HTML
+            # 1️⃣ Extraer enlaces de scripts y HTML
             content = await page.content()
             for match in re.findall(VIDEO_PATTERN, content):
-                if "favicon" not in match.lower():  # Ignorar favicons
+                if "favicon" not in match.lower():
                     videos.add(match)
 
-            # 2️⃣ Extraer de <video> y <source>
+            # 2️⃣ Extraer <video> y <source>
             video_elements = await page.query_selector_all("video")
             for v in video_elements:
                 src = await v.get_attribute("src")
@@ -41,13 +40,20 @@ async def extract_videos(url: str):
                     if ssrc and "favicon" not in ssrc.lower():
                         videos.add(ssrc)
 
-            # 3️⃣ Revisar enlaces dinámicos (botones, divs con data-video, links)
-            server_buttons = await page.query_selector_all("a[href], button[data-video], div[data-video]")
-            for btn in server_buttons:
+            # 3️⃣ Hacer click en todos los botones que podrían contener video
+            buttons = await page.query_selector_all("a[href], button, div[data-video]")
+            for btn in buttons:
                 try:
                     href = await btn.get_attribute("href")
                     if href and href.lower().endswith((".mp4", ".mkv", ".m3u8")):
                         videos.add(href)
+                    # Intentar click dinámico para cargar redirecciones
+                    await btn.click()
+                    await page.wait_for_load_state("networkidle")
+                    content_after = await page.content()
+                    for match in re.findall(VIDEO_PATTERN, content_after):
+                        if "favicon" not in match.lower():
+                            videos.add(match)
                 except:
                     continue
 
@@ -60,13 +66,11 @@ async def extract_videos(url: str):
 
     return list(videos)
 
-
 @app.route("/get-videos")
 def get_videos():
     url = request.args.get("url")
     if not url:
         return jsonify({"error": "URL no proporcionada"}), 400
-
     try:
         videos = asyncio.run(extract_videos(url))
         if not videos:
@@ -75,7 +79,6 @@ def get_videos():
     except Exception as e:
         print(f"⚠ Error en get_videos: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
