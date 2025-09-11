@@ -10,20 +10,37 @@ from playwright.async_api import async_playwright
 nest_asyncio.apply()
 
 app = Flask(__name__)
-CORS(app)  # Permite solicitudes desde cualquier dominio
+CORS(app)
 
+# Patrón para capturar videos .mp4, .mkv, .m3u8
 VIDEO_PATTERN = r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)'
 
 async def extract_videos(url: str):
     async with async_playwright() as p:
-        # Chromium sin sandbox para Fly
         browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
         page = await browser.new_page()
         try:
-            await page.goto(url, timeout=30000)  # Espera máximo 30s
+            # Ir a la URL y esperar a que se cargue completamente JS
+            await page.goto(url, timeout=60000)
+            await page.wait_for_load_state("networkidle")  # Espera a que termine JS
             content = await page.content()
-            # Extraer links de video
+            
+            # Buscar links de video en el DOM final
             videos = re.findall(VIDEO_PATTERN, content)
+            
+            # También podemos buscar en elementos <video> y sus fuentes
+            video_elements = await page.query_selector_all("video")
+            for v in video_elements:
+                src = await v.get_attribute("src")
+                if src:
+                    videos.append(src)
+                # Revisar <source> dentro de <video>
+                sources = await v.query_selector_all("source")
+                for s in sources:
+                    ssrc = await s.get_attribute("src")
+                    if ssrc:
+                        videos.append(ssrc)
+            
             return list(set(videos))  # Eliminar duplicados
         finally:
             await browser.close()
@@ -40,6 +57,6 @@ def get_videos():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Puerto que Fly asigna
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
