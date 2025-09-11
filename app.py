@@ -51,6 +51,12 @@ async def extract_videos(url: str):
             print(f"⚠ Error en extract_videos: {e}")
         finally:
             await browser.close()
+
+    
+    # FILTRAR FAVICONS y links incorrectos
+    videos = [v for v in videos if not v.startswith("https://www.google.com/s2/favicons")]
+    # Solo mantener URLs de video válidas
+    videos = [v for v in videos if re.search(r'\.(mp4|mkv|m3u8)$', v)]
     
     return list(videos)
 
