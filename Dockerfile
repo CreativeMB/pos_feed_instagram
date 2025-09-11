@@ -1,10 +1,7 @@
-# Partimos de Python 3.11 slim
-FROM python:3.11-slim
+FROM python:3.11-bullseye
 
-# Evitar preguntas durante instalación
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Actualizar e instalar librerías necesarias para Chromium
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -31,24 +28,5 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     ca-certificates \
     fonts-liberation \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Instalar pip y dependencias Python
-WORKDIR /app
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Instalar Playwright y navegadores
-RUN pip install --no-cache-dir playwright && \
-    playwright install --with-deps
-
-# Copiar todo el código de la app
-COPY . .
-
-# Exponer puerto para Fly
-EXPOSE 8080
-
-# Comando por defecto para correr la app
-CMD ["python", "app.py"]
