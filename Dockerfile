@@ -1,11 +1,9 @@
-FROM python:3.11-bullseye
+FROM python:3.11-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-
+# Instalar librerías necesarias para Chromium
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
-    libgconf-2-4 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
@@ -23,10 +21,22 @@ RUN apt-get update && apt-get install -y \
     libexpat1 \
     libdbus-1-3 \
     libatspi2.0-0 \
-    wget \
-    curl \
-    gnupg \
-    ca-certificates \
-    fonts-liberation \
+    wget curl gnupg ca-certificates fonts-liberation \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# Carpeta de la app
+WORKDIR /app
+COPY . /app
+
+# Instalar dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instalar Chromium para Playwright
+RUN playwright install chromium
+
+# Exponer el puerto asignado por Fly
+ENV PORT=8080
+
+# Comando principal
+CMD ["python3", "app.py"]
 
