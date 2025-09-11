@@ -1,17 +1,17 @@
-# Imagen base
+# Imagen base mínima con Python
 FROM python:3.12-slim
 
 # Crear directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos
+# Copiar archivos necesarios
 COPY app.py requirements.txt ./
 
-# Instalar dependencias
+# Instalar dependencias sin cache
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exponer puerto
+# Exponer puerto 8080
 EXPOSE 8080
 
-# Comando para correr la app
+# Comando para iniciar la app
 CMD ["python", "app.py"]
