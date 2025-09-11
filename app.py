@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import re
@@ -15,14 +16,26 @@ VIDEO_PATTERN = r'https?://[^\s"\'>]+?\.(?:mp4|mkv|m3u8)(?:\?[^"\'>\s]*)?'
 
 async def extract_videos(url: str):
     videos = set()
+    print(f"[INFO] Iniciando extracción para: {url}")
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-extensions",
+                "--disable-gpu",
+                "--disable-software-rasterizer"
+            ]
+        )
         page = await browser.new_page()
         try:
             await page.goto(url, timeout=60000)
             await page.wait_for_load_state("networkidle")
+            print("[INFO] Página cargada correctamente")
 
-            # 1️⃣ Extraer enlaces de scripts y HTML
+            # 1️⃣ Extraer enlaces directos desde HTML
             content = await page.content()
             for match in re.findall(VIDEO_PATTERN, content):
                 if "favicon" not in match.lower():
@@ -40,21 +53,15 @@ async def extract_videos(url: str):
                     if ssrc and "favicon" not in ssrc.lower():
                         videos.add(ssrc)
 
-            # 3️⃣ Hacer click en todos los botones que podrían contener video
+            # 3️⃣ Extraer links de botones o divs con video
             buttons = await page.query_selector_all("a[href], button, div[data-video]")
             for btn in buttons:
                 try:
                     href = await btn.get_attribute("href")
                     if href and href.lower().endswith((".mp4", ".mkv", ".m3u8")):
                         videos.add(href)
-                    # Intentar click dinámico para cargar redirecciones
-                    await btn.click()
-                    await page.wait_for_load_state("networkidle")
-                    content_after = await page.content()
-                    for match in re.findall(VIDEO_PATTERN, content_after):
-                        if "favicon" not in match.lower():
-                            videos.add(match)
-                except:
+                except Exception as e:
+                    print(f"[WARN] Error al procesar botón: {e}")
                     continue
 
         except PlaywrightTimeoutError:
@@ -63,7 +70,8 @@ async def extract_videos(url: str):
             print(f"⚠ Error en extract_videos: {e}")
         finally:
             await browser.close()
-
+            print(f"[INFO] Chromium cerrado. Se encontraron {len(videos)} videos")
+    
     return list(videos)
 
 @app.route("/get-videos")
@@ -72,7 +80,8 @@ def get_videos():
     if not url:
         return jsonify({"error": "URL no proporcionada"}), 400
     try:
-        videos = asyncio.run(extract_videos(url))
+        loop = asyncio.get_event_loop()
+        videos = loop.run_until_complete(extract_videos(url))
         if not videos:
             return jsonify({"error": "No se encontraron videos"}), 404
         return jsonify({"videos": videos})
@@ -82,4 +91,4 @@ def get_videos():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)
