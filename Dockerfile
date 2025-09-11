@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 
+# Instalar dependencias de Chromium
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -31,4 +32,5 @@ RUN playwright install chromium
 
 ENV PORT=8080
 CMD ["python3", "app.py"]
+
 
