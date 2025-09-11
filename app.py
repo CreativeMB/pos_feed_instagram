@@ -1,11 +1,28 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import re
+import asyncio
+from playwright.async_api import async_playwright
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Permite solicitudes desde cualquier dominio
+
+VIDEO_PATTERN = r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)'
+
+async def extract_videos(url: str):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        try:
+            await page.goto(url, timeout=30000)  # Espera máximo 30s
+            content = await page.content()
+
+            # Extraer links de video
+            videos = re.findall(VIDEO_PATTERN, content)
+            videos = list(set(videos))  # Eliminar duplicados
+            return videos
+        finally:
+            await browser.close()
 
 @app.route("/get-videos")
 def get_videos():
@@ -14,31 +31,14 @@ def get_videos():
         return jsonify({"error": "URL no proporcionada"}), 400
 
     try:
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-
-        driver = webdriver.Chrome(options=chrome_options)
-        driver.get(url)
-        
-        # Esperar un momento para que JS cargue los videos
-        driver.implicitly_wait(5)
-        
-        html = driver.page_source
-        driver.quit()
-
-        # Extraer enlaces de video
-        videos = re.findall(r'https?://[^\s"\']+\.(?:mp4|mkv|m3u8)', html)
-        videos = list(set(videos))
-
+        videos = asyncio.run(extract_videos(url))
         return jsonify({"videos": videos})
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
 
 
 
