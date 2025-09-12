@@ -14,6 +14,13 @@ WEB = "www.floristerialoslirios.com"
 CIUDAD = "Bogotá"
 NEGOCIO = "Floristería Los Lirios"
 
+
+FACEBOOK_PAGE_ACCESS_TOKEN = "EAAVhavBM6PwBPQ2ZCcgJVZA2eaZCCe2yf2KzghgZCKsL7SoG4Oc4cFqEYa1fDmcftL1z5VXUKcpPt0GbZABEboEYKQLcDKw3scI985zVTgmo8ISYQENOndGuUGPGqG8Ezfwy42S2YUinaOXDPwVwpaZBpbggOguE2ou6enET1m6jDKZBZCt059PJNX4JqCBwftoeLvo3Xt7fpFsiDi7z7HnDUN72mBDgP5rHJp5vP4j7NDgZD"
+# Lo obtendrás siguiendo los pasos que te di con el Graph API Explorer:
+# me/accounts -> buscar tu Page ID.
+# Luego {page-id}?fields=instagram_business_account -> copiar el 'id' de la respuesta.
+INSTAGRAM_BUSINESS_ACCOUNT_ID = "17841402134241308"
+
 # -------------------------------
 # CARGAR FOTOS
 # -------------------------------
