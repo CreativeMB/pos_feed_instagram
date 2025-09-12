@@ -2,12 +2,13 @@ import random
 import json
 import os
 from datetime import datetime
-import requests # ¡Asegúrate de tener instalada esta librería: pip install requests!
+import requests
 
 # -------------------------------
 # CONFIGURACIÓN
 # -------------------------------
-FOTOS_CARPETA = "fotos" # Esta carpeta ya no se usará para listar, pero la mantengo si la usas para otras cosas.
+# La carpeta FOTOS_CARPETA ya no se usará para listar, pero la mantengo si la usas para otras cosas.
+FOTOS_CARPETA = "fotos"
 REGISTRO_ARCHIVO = "registro_publicaciones.json"
 
 WHATSAPP = "3014418502"
@@ -19,9 +20,19 @@ NEGOCIO = "Floristería Los Lirios"
 # URL del JSON alojado en Google Drive. Asegúrate de que el archivo esté compartido "Cualquier persona con el enlace".
 GOOGLE_DRIVE_JSON_URL = "https://drive.google.com/uc?export=download&id=1mGqnHpLxP3mWUPHVUyJtSb9WiwRlaQ_C"
 
-# --- Configuración de Facebook/Instagram API ---
-FACEBOOK_PAGE_ACCESS_TOKEN = "EAAVhavBM6PwBPQ2ZCcgJVZA2eaZCCe2yf2KzghgZCKsL7SoG4Oc4cFqEYa1fDmcftL1z5VXUKcpPt0GbZABEboEYKQLcDKw3scI985zVTgmo8ISYQENOndGuUGPGqG8Ezfwy42S2YUinaOXDPwVwpaZBpbggOguE2ou6enET1m6jDKZBZCt059PJNX4JqCBwftoeLvo3Xt7fpFsiDi7z7HnDUN72mBDgP5rHJp5vP4j7NDgZD"
-INSTAGRAM_BUSINESS_ACCOUNT_ID = "17841402134241308"
+# --- Configuración de Facebook/Instagram API (¡AHORA LEYENDO DE SECRETS!) ---
+# Leer de variables de entorno (Secrets de Fly.io).
+# Se usa os.environ[] para que falle si no están configuradas, lo cual es buena práctica en producción.
+try:
+    FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
+    INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
+except KeyError as e:
+    print(f"Error: La variable de entorno {e} no está configurada. Por favor, define tus secrets en Fly.io.")
+    # Si estas variables no están configuradas, el script no podrá continuar.
+    # Puedes optar por sys.exit(1) aquí si quieres que el script se detenga inmediatamente.
+    # Por ahora, simplemente asignamos None para que la condición final falle.
+    FACEBOOK_PAGE_ACCESS_TOKEN = None
+    INSTAGRAM_BUSINESS_ACCOUNT_ID = None
 
 
 # -------------------------------
@@ -35,15 +46,6 @@ def cargar_fotos_desde_drive(url):
         
         # Asumo que el JSON es un objeto donde los valores son las URLs de las fotos
         # Ejemplo: {"foto1": "http://url.com/foto1.jpg", "foto2": "http://url.com/foto2.png"}
-        # Si tu JSON es una lista directa de URLs: ["http://url1.jpg", "http://url2.png"],
-        # entonces 'list(json_data.values())' debería ser simplemente 'json_data'.
-        
-        # Si el JSON es un diccionario de objetos con una clave 'url':
-        # {"item1": {"nombre": "Foto 1", "url": "http://url.com/foto1.jpg"}, ...}
-        # entonces sería [item['url'] for item in json_data.values()]
-        
-        # Para el ejemplo 'referenciasDrive[key] = json.getString(key)', asumimos
-        # que es un diccionario simple { "clave": "url_de_la_imagen" }
         image_urls = list(json_data.values())
         
         if not image_urls:
@@ -76,14 +78,14 @@ else:
     registro = {"fotos_usadas": [], "textos_usados": [], "hashtags_usados": []}
 
 # -------------------------------
-# CARGAR ENCABEZADOS Y HASHTAGS DESDE ARCHIVOS
+# CARGAR ENCABEZADOS Y HASHTAGS DESDE ARCHIVOS (¡Rutas corregidas a la raíz!)
 # -------------------------------
 def cargar_lista(path):
     with open(path, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
-ENCABEZADOS = cargar_lista("encabezados.txt")
-HASHTAGS_TODOS = cargar_lista("hashtags.txt")
+ENCABEZADOS = cargar_lista("encabezados.txt") # Corregido: busca directamente en la raíz
+HASHTAGS_TODOS = cargar_lista("hashtags.txt") # Corregido: busca directamente en la raíz
 
 # -------------------------------
 # FILTRAR HASHTAGS POR CATEGORÍA
@@ -134,7 +136,7 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
     upload_url = f"{graph_url_base}{instagram_account_id}/media"
     
     params_upload = {
-        'image_url': image_public_url, # ¡Ahora 'foto' ya es la URL pública!
+        'image_url': image_public_url, # 'foto_url' ya es la URL pública
         'caption': caption,
         'access_token': access_token
     }
@@ -177,7 +179,6 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
 # -------------------------------
 # GENERAR POST
 # -------------------------------
-# 'foto' ahora contendrá directamente la URL de la imagen de Drive
 foto_url = elegir_foto()
 encabezado = elegir_encabezado()
 hashtags = elegir_hashtags()
@@ -200,7 +201,7 @@ with open(REGISTRO_ARCHIVO, "w", encoding="utf-8") as f:
 # GUARDAR JSON PARA CREATOR STUDIO / API (y preparar para el envío)
 # -------------------------------
 post_data = {
-    "foto": foto_url, # La ruta local ya no es necesaria aquí, ahora es la URL pública
+    "foto": foto_url, # Ya es la URL pública
     "texto": texto_post
 }
 with open("post_del_dia.json", "w", encoding="utf-8") as f:
@@ -217,13 +218,14 @@ print(texto_post)
 # -------------------------------
 # ¡PUBLICAR EN INSTAGRAM!
 # -------------------------------
-if INSTAGRAM_BUSINESS_ACCOUNT_ID != "TU_ID_DE_CUENTA_DE_INSTAGRAM_BUSINESS_AQUI":
+# Verificar que las credenciales no sean None debido a un fallo en os.environ
+if FACEBOOK_PAGE_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID:
     print("\n=== INTENTANDO PUBLICAR EN INSTAGRAM ===")
     publicar_en_instagram(
         instagram_account_id=INSTAGRAM_BUSINESS_ACCOUNT_ID,
         access_token=FACEBOOK_PAGE_ACCESS_TOKEN,
-        image_public_url=post_data["foto"], # Pasamos la URL directamente
+        image_public_url=post_data["foto"],
         caption=post_data["texto"]
     )
 else:
-    print("\nADVERTENCIA: No se pudo publicar en Instagram. Por favor, asegúrate de que el 'INSTAGRAM_BUSINESS_ACCOUNT_ID' esté configurado correctamente.")
+    print("\nADVERTENCIA: No se pudo publicar en Instagram. Las credenciales de Facebook/Instagram no están configuradas correctamente. Revisa tus Secrets en Fly.io.")
