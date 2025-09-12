@@ -15,5 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Comando para ejecutar tu script cuando el contenedor se inicie
-# Asegúrate de que 'app.py' sea el nombre de tu script principal
+# Ahora ejecutará el servidor Flask que a su vez maneja la programación
 CMD ["python", "app.py"]
