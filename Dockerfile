@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia el resto de tu aplicación al directorio de trabajo
-# Esto incluye app.py, encabezados.txt, hashtags.txt y la carpeta texts/
+# Esto incluye app.py y la carpeta texts/ (con encabezados.txt y hashtags.txt dentro)
 COPY . .
 
 # Comando para ejecutar tu script cuando el contenedor se inicie
