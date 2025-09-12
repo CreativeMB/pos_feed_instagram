@@ -82,8 +82,8 @@ def cargar_lista(path):
     with open(path, "r", encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
-ENCABEZADOS = cargar_lista("texts/encabezados.txt")
-HASHTAGS_TODOS = cargar_lista("texts/hashtags.txt")
+ENCABEZADOS = cargar_lista("encabezados.txt")
+HASHTAGS_TODOS = cargar_lista("hashtags.txt")
 
 # -------------------------------
 # FILTRAR HASHTAGS POR CATEGORÍA
