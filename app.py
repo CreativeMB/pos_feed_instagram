@@ -1,137 +1,118 @@
-# app.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import re
-import asyncio
+import random
+import json
 import os
-import nest_asyncio
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from datetime import datetime
 
-nest_asyncio.apply()
+# -------------------------------
+# CONFIGURACIÓN
+# -------------------------------
+FOTOS_CARPETA = "fotos"
+REGISTRO_ARCHIVO = "registro_publicaciones.json"
 
-app = Flask(__name__)
-CORS(app)
+WHATSAPP = "3014418502"
+WEB = "www.floristerialoslirios.com"
+CIUDAD = "Bogotá"
+NEGOCIO = "Floristería Los Lirios"
 
-VIDEO_PATTERN = r'https?://[^\s"\'>]+?\.(?:mp4|mkv|m3u8)(?:\?[^"\'>\s]*)?'
+# -------------------------------
+# CARGAR FOTOS
+# -------------------------------
+fotos = [f for f in os.listdir(FOTOS_CARPETA) if f.lower().endswith((".jpg", ".png"))]
+if not fotos:
+    raise ValueError("No se encontraron fotos en la carpeta.")
 
-async def extract_videos(url: str):
-    videos = set()
-    visited_iframes = set()
+# -------------------------------
+# CARGAR REGISTRO DE PUBLICACIONES
+# -------------------------------
+if os.path.exists(REGISTRO_ARCHIVO):
+    with open(REGISTRO_ARCHIVO, "r", encoding="utf-8") as f:
+        registro = json.load(f)
+else:
+    registro = {"fotos_usadas": [], "textos_usados": [], "hashtags_usados": []}
 
-    print(f"[INFO] Iniciando extracción para: {url}")
+# -------------------------------
+# CARGAR ENCABEZADOS Y HASHTAGS DESDE ARCHIVOS
+# -------------------------------
+def cargar_lista(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-extensions",
-                "--disable-gpu",
-                "--disable-software-rasterizer"
-            ]
-        )
-        page = await browser.new_page()
+ENCABEZADOS = cargar_lista("texts/encabezados.txt")
+HASHTAGS_TODOS = cargar_lista("texts/hashtags.txt")
 
-        # Capturar todas las requests de video
-        page.on("response", lambda response: asyncio.create_task(check_video_response(response, videos)))
+# -------------------------------
+# FILTRAR HASHTAGS POR CATEGORÍA
+# Se asume formato: #tag|categoria
+# Ejemplo en hashtags.txt: #FloresBogotá|local
+# -------------------------------
+def filtrar_hashtags(categoria):
+    return [h.split("|")[0] for h in HASHTAGS_TODOS if h.endswith(f"|{categoria}")]
 
-        try:
-            await page.goto(url, timeout=60000)
-            await page.wait_for_load_state("networkidle")
-            print("[INFO] Página cargada correctamente")
+HASHTAGS_LOCAL = filtrar_hashtags("local")
+HASHTAGS_OCASION = filtrar_hashtags("ocasión")
+HASHTAGS_EMOCIONES = filtrar_hashtags("emociones")
+HASHTAGS_GENERALES = filtrar_hashtags("generales")
 
-            await extract_from_page(page, videos, visited_iframes)
+# -------------------------------
+# FUNCIONES
+# -------------------------------
+def elegir_foto():
+    disponibles = list(set(fotos) - set(registro.get("fotos_usadas", [])))
+    if not disponibles:
+        registro["fotos_usadas"] = []
+        disponibles = fotos
+    seleccion = random.choice(disponibles)
+    registro["fotos_usadas"].append(seleccion)
+    return seleccion
 
-        except PlaywrightTimeoutError:
-            print("⚠ Timeout al cargar la página")
-        except Exception as e:
-            print(f"⚠ Error en extract_videos: {e}")
-        finally:
-            await browser.close()
-            print(f"[INFO] Chromium cerrado. Se encontraron {len(videos)} videos")
+def elegir_encabezado():
+    seleccion = random.choice(ENCABEZADOS)
+    return seleccion.replace("{ciudad}", CIUDAD)
 
-    return list(videos)
+def elegir_hashtags():
+    h_local = random.sample(HASHTAGS_LOCAL, min(2, len(HASHTAGS_LOCAL)))
+    h_ocas = random.sample(HASHTAGS_OCASION, min(2, len(HASHTAGS_OCASION)))
+    h_emoc = random.sample(HASHTAGS_EMOCIONES, min(1, len(HASHTAGS_EMOCIONES)))
+    h_gen  = random.sample(HASHTAGS_GENERALES, min(2, len(HASHTAGS_GENERALES)))
+    combinados = h_local + h_ocas + h_emoc + h_gen
+    random.shuffle(combinados)
+    return combinados
 
+# -------------------------------
+# GENERAR POST
+# -------------------------------
+foto = elegir_foto()
+encabezado = elegir_encabezado()
+hashtags = elegir_hashtags()
+texto_post = f"{encabezado}\nMás de 20 años de experiencia en {CIUDAD}. Ordena ya por WhatsApp {WHATSAPP}\n{WEB}\n" + " ".join(hashtags)
 
-async def check_video_response(response, videos):
-    url = response.url
-    if re.search(r'\.(mp4|mkv|m3u8)(\?.*)?$', url):
-        print(f"[INFO] Video detectado en request: {url}")
-        videos.add(url)
+# -------------------------------
+# GUARDAR REGISTRO
+# -------------------------------
+registro_guardar = registro.copy()
+registro_guardar["ultima_publicacion"] = {
+    "foto": foto,
+    "encabezado": encabezado,
+    "hashtags": hashtags,
+    "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+}
+with open(REGISTRO_ARCHIVO, "w", encoding="utf-8") as f:
+    json.dump(registro_guardar, f, ensure_ascii=False, indent=4)
 
+# -------------------------------
+# GUARDAR JSON PARA CREATOR STUDIO / API
+# -------------------------------
+post_data = {
+    "foto": os.path.join(FOTOS_CARPETA, foto),
+    "texto": texto_post
+}
+with open("post_del_dia.json", "w", encoding="utf-8") as f:
+    json.dump(post_data, f, ensure_ascii=False, indent=4)
 
-async def extract_from_page(page, videos, visited_iframes):
-    # 1️⃣ Extraer enlaces directos desde HTML
-    content = await page.content()
-    for match in re.findall(VIDEO_PATTERN, content):
-        if "favicon" not in match.lower():
-            videos.add(match)
-
-    # 2️⃣ Extraer <video> y <source>
-    video_elements = await page.query_selector_all("video")
-    for v in video_elements:
-        src = await v.get_attribute("src")
-        if src and "favicon" not in src.lower():
-            videos.add(src)
-        sources = await v.query_selector_all("source")
-        for s in sources:
-            ssrc = await s.get_attribute("src")
-            if ssrc and "favicon" not in ssrc.lower():
-                videos.add(ssrc)
-
-    # 3️⃣ Extraer iframes y recorrerlos
-    iframe_elements = await page.query_selector_all("iframe")
-    for iframe in iframe_elements:
-        src = await iframe.get_attribute("src")
-        if src and src not in visited_iframes and "twitter.com" not in src:
-            visited_iframes.add(src)
-            print(f"[INFO] Iframe detectado: {src}")
-            try:
-                iframe_page = await page.context.new_page()
-                await iframe_page.goto(src, timeout=30000)
-                await iframe_page.wait_for_load_state("networkidle")
-                await extract_from_page(iframe_page, videos, visited_iframes)
-                await iframe_page.close()
-            except Exception as e:
-                print(f"[WARN] Error al procesar iframe: {e}")
-
-    # 4️⃣ Extra: Variables JS dinámicas
-    try:
-        js_video = await page.evaluate("""
-            () => {
-                const vars = [];
-                for(const key in window) {
-                    if(typeof window[key] === 'string' && window[key].match(/\\.mkv$|\\.mp4$|\\.m3u8$/)) {
-                        vars.push(window[key]);
-                    }
-                }
-                return vars;
-            }
-        """)
-        if js_video:
-            videos.update(js_video)
-    except Exception:
-        pass
-
-
-@app.route("/get-videos")
-def get_videos():
-    url = request.args.get("url")
-    if not url:
-        return jsonify({"error": "URL no proporcionada"}), 400
-    try:
-        loop = asyncio.get_event_loop()
-        videos = loop.run_until_complete(extract_videos(url))
-        if not videos:
-            return jsonify({"error": "No se encontraron videos"}), 404
-        return jsonify({"videos": videos})
-    except Exception as e:
-        print(f"⚠ Error en get_videos: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=True)
+# -------------------------------
+# MOSTRAR RESULTADO
+# -------------------------------
+print("=== FOTO SELECCIONADA ===")
+print(foto)
+print("\n=== TEXTO DEL POST ===")
+print(texto_post)
