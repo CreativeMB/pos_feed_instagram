@@ -1,3 +1,4 @@
+pytz
 requests
-Flask
-APScheduler
+flask
+apscheduler
