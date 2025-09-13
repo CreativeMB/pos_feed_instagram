@@ -195,16 +195,17 @@ def tarea_programada_publicar_instagram():
     print(f"\n--- INICIANDO PUBLICACIÓN ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
     try:
         foto_url = elegir_foto()
-        nombre_imagen = os.path.basename(foto_url)
+        # Obtener solo el nombre sin extensión
+        nombre_imagen = os.path.splitext(os.path.basename(foto_url))[0]
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
 
         # Construir el caption
         texto_post = (
-            f"{encabezado} ❤️\n\n"
-            f"Ordena ya por WhatsApp: https://wa.me/{WHATSAPP}\n"
+            f"{encabezado}\n"
+            f"Ordena ya por WhatsApp: {WHATSAPP}\n"
             f"Referencia: {nombre_imagen}\n"
-            f"Visita nuestra web: https://floristerialoslirios.com\n\n"
+            f"Visita: www.floristerialoslirios.com\n"
             + " ".join(hashtags)
         )
 
