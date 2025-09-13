@@ -8,8 +8,8 @@ primary_region = "bog"
   command = "python app.py"
 
 # Proceso secundario: Scheduler
-[processes.scheduler]
-  command = "python scheduler.py"
+#[processes.scheduler]
+#  command = "python scheduler.py"
 
 [http_service]
   internal_port = 8080
