@@ -31,15 +31,14 @@ app = Flask(__name__, static_folder=STATIC_IMAGES_FOLDER_NAME)
 try:
     FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
-     FACEBOOK_PAGE_ID = os.environ["FACEBOOK_PAGE_ID"] 
+    FACEBOOK_PAGE_ID = os.environ["FACEBOOK_PAGE_ID"]  # <--- CORREGIDO: Alineado con las de arriba
     # Variable de entorno para la URL base de la aplicación desplegada
     # EJEMPLO: https://tu-app-de-instagram.fly.dev o https://www.tudominio.com
-    APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/') # Asegurarse de que no termine con '/'
+    APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/')
 except KeyError as e:
     print(f"Error CRÍTICO: La variable de entorno {e} no está configurada.")
-     print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID, FACEBOOK_PAGE_ID y APP_BASE_URL.")
+    print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID, FACEBOOK_PAGE_ID y APP_BASE_URL.") # <--- CORREGIDO: Alineado con el print de arriba
     sys.exit(1)
-
 # -------------------------------
 # CARGAR FOTOS LOCALES
 # -------------------------------
