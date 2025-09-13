@@ -1,6 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from main_app import tarea_programada_publicar_instagram
 import random
 import json
 import os
