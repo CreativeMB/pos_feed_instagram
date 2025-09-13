@@ -10,7 +10,7 @@ def iniciar_scheduler():
 
     scheduler.add_job(
         tarea_programada_publicar_instagram,
-        trigger=CronTrigger(hour=12, minute=35, timezone=pytz.timezone("America/Bogota")),
+        trigger=CronTrigger(hour=12, minute=45, timezone=pytz.timezone("America/Bogota")),
         id='instagram_daily_post',
         replace_existing=True
     )
