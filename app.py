@@ -144,37 +144,6 @@ def elegir_hashtags():
     return combinados
 
 # -------------------------------
-# PUBLICACIÓN EN facebook
-# -------------------------------
-def publicar_en_facebook(facebook_page_id, access_token, image_public_url, caption):
-    graph_url_base = "https://graph.facebook.com/v19.0/"
-    # Para publicar en Facebook, se publica en el endpoint de "photos" o "feed" de la página.
-    # Usaremos el endpoint de "photos" para incluir una imagen. [2, 7]
-    post_url = f"{graph_url_base}{facebook_page_id}/photos"
-    
-    params = {
-        'url': image_public_url, # URL de la imagen
-        'caption': caption,      # Texto del post
-        'access_token': access_token
-    }
-    
-    print(f"Intentando publicar en Facebook Page con ID: {facebook_page_id}")
-    try:
-        response = requests.post(post_url, params=params)
-        response.raise_for_status() # Esto lanzará un HTTPError si la respuesta no es 200 OK
-        post_id = response.json()['id']
-        print(f"Publicación exitosa en Facebook con ID: {post_id}")
-        return True
-    except requests.exceptions.HTTPError as http_err:
-        print(f"Error HTTP al publicar en Facebook: {http_err}")
-        print(f"Respuesta del servidor (Facebook): {response.text}")
-        return False
-    except Exception as e:
-        print(f"Error inesperado publicando en Facebook: {e}")
-        return False
-
-
-# -------------------------------
 # PUBLICACIÓN EN INSTAGRAM
 # -------------------------------
 def publicar_en_instagram(instagram_account_id, access_token, image_public_url, caption):
@@ -221,6 +190,9 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
 # -------------------------------
 # FUNCIÓN PRINCIPAL DE PUBLICACIÓN
 # -------------------------------
+# -------------------------------
+# FUNCIÓN PRINCIPAL DE PUBLICACIÓN
+# -------------------------------
 def tarea_programada_publicar_instagram():
     print(f"\n--- INICIANDO PUBLICACIÓN ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
     try:
@@ -250,25 +222,29 @@ def tarea_programada_publicar_instagram():
             json.dump(registro, f, ensure_ascii=False, indent=4)
         print(f"Información de la última publicación guardada: {registro['ultima_publicacion']}")
 
+        # --- Publicar en Instagram ---
         if FACEBOOK_PAGE_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID and APP_BASE_URL:
-            exito = publicar_en_instagram(
+            print("Intentando publicar en Instagram...")
+            exito_instagram = publicar_en_instagram(
                 instagram_account_id=INSTAGRAM_BUSINESS_ACCOUNT_ID,
                 access_token=FACEBOOK_PAGE_ACCESS_TOKEN,
                 image_public_url=foto_url,
                 caption=texto_post
             )
-            if exito:
-                print("Publicación exitosa.")
+            if exito_instagram:
+                print("Publicación exitosa en Instagram.")
             else:
-                print("Error en la publicación (ver logs anteriores para más detalles).")
+                print("Error en la publicación de Instagram (ver logs anteriores para más detalles).")
         else:
-            print("Credenciales o APP_BASE_URL no configurados. No se puede publicar en Instagram.")
+            print("Credenciales de Instagram o APP_BASE_URL no configurados. No se puede publicar en Instagram.")
             
+        # --- ELIMINADO: Sección de publicación en Facebook ---
+        # El bloque anterior para publicar en Facebook ha sido eliminado o comentado.
+
     except Exception as e:
         print(f"Error general en la tarea programada: {e}")
     finally:
         print(f"--- PUBLICACIÓN FINALIZADA ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
-
 
 # -------------------------------
 # RUTAS FLASK
