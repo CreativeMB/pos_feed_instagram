@@ -7,7 +7,7 @@ import sys
 import threading
 from flask import Flask, jsonify
 import pytz
-
+from main_app import tarea_programada_publicar_instagram  # Solo la función de publicación
 # -------------------------------
 # CONFIGURACIÓN
 # -------------------------------
