@@ -1,25 +1,19 @@
-# fly.toml app configuration file for pos-feed-instagram
-
 app = "pos-feed-instagram"
 primary_region = "bog"
 
 [build]
+
+# Proceso principal: Flask
+[processes.app]
+  command = "python app.py"
+
+# Proceso secundario: Scheduler
+[processes.scheduler]
+  command = "python scheduler.py"
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
-
-[processes]
-  # Proceso para Flask
-  app = "python app.py"
-  # Proceso para el scheduler
-  scheduler = "python scheduler.py"
-
-[[vm]]
-  memory = "1gb"
-  cpu_kind = "shared"
-  cpus = 1
-  memory_mb = 2048
+  min_machines_running = 1  # al menos 1 máquina corriendo para el app
