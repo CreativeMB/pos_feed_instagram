@@ -288,7 +288,7 @@ scheduler = BackgroundScheduler()
 # Ejemplo: Ejecutar cada 24 horas
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger=IntervalTrigger(hours=24), # O days=1, minutes=5 para probar, etc.
+    trigger=IntervalTrigger(minutes=1), # O days=1, minutes=5 para probar, etc.
     id='instagram_daily_post',
     name='Publicación diaria en Instagram',
     replace_existing=True
