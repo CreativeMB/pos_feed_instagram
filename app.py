@@ -195,12 +195,14 @@ def tarea_programada_publicar_instagram():
     print(f"\n--- INICIANDO PUBLICACIÓN ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
     try:
         foto_url = elegir_foto()
+        nombre_imagen = os.path.basename(foto_url)
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
         texto_post = f"{encabezado}\nOrdena ya por WhatsApp {WHATSAPP}\n{WEB}\n" + " ".join(hashtags)
 
         registro["ultima_publicacion"] = {
             "foto": foto_url,
+            "nombre_imagen": nombre_imagen,
             "encabezado": encabezado,
             "hashtags": hashtags,
             "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
