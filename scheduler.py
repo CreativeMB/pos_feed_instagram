@@ -7,7 +7,6 @@ import pytz
 def iniciar_scheduler():
     scheduler = BlockingScheduler()
     
-
     scheduler.add_job(
         tarea_programada_publicar_instagram,
         trigger=CronTrigger(hour=12, minute=45, timezone=pytz.timezone("America/Bogota")),
@@ -15,7 +14,7 @@ def iniciar_scheduler():
         replace_existing=True
     )
     
-    print("Scheduler iniciado. Publicación diaria programada a las 12:35 PM hora Bogotá.")
+    print("Scheduler iniciado. Publicación diaria programada a las 12:45 PM hora Bogotá.")
     scheduler.start()
 
 
