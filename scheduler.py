@@ -1,15 +1,17 @@
 # scheduler.py
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from main_app import tarea_programada_publicar_instagram
 import pytz
-from app import tarea_programada_publicar_instagram  # Importa la función desde app.py
+import time
+
 
 scheduler = BlockingScheduler()
 
 # Programación diaria a las 12:10 PM hora Bogotá
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger=CronTrigger(hour=12, minute=22, timezone=pytz.timezone("America/Bogota")),
+    trigger=CronTrigger(hour=12, minute=35, timezone=pytz.timezone("America/Bogota")),
     id='instagram_daily_post',
     name='Publicación diaria a las 12:10 PM (hora Colombia)',
     replace_existing=True
