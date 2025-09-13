@@ -198,7 +198,19 @@ def tarea_programada_publicar_instagram():
         nombre_imagen = os.path.basename(foto_url)
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
-        texto_post = f"{encabezado}\nOrdena ya por WhatsApp {WHATSAPP}\n{WEB}\n" + " ".join(hashtags)
+        
+        # WhatsApp clicable
+        whatsapp_link = f"https://wa.me/{WHATSAPP}"
+        # Web clicable
+        web_link = f"https://{WEB}" if not WEB.startswith("http") else WEB
+        
+        texto_post = (
+            f"{encabezado}\n"
+            f"Ordena ya por WhatsApp: {whatsapp_link}\n"
+            f"Referencia: {nombre_imagen}\n"
+            f"Visita: {web_link}\n"
+            + " ".join(hashtags)
+        )
 
         registro["ultima_publicacion"] = {
             "foto": foto_url,
@@ -228,6 +240,7 @@ def tarea_programada_publicar_instagram():
         print(f"Error general en la tarea programada: {e}")
     finally:
         print(f"--- PUBLICACIÓN FINALIZADA ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
+
 
 # -------------------------------
 # RUTAS FLASK
