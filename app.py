@@ -31,12 +31,13 @@ app = Flask(__name__, static_folder=STATIC_IMAGES_FOLDER_NAME)
 try:
     FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
+     FACEBOOK_PAGE_ID = os.environ["FACEBOOK_PAGE_ID"] 
     # Variable de entorno para la URL base de la aplicación desplegada
     # EJEMPLO: https://tu-app-de-instagram.fly.dev o https://www.tudominio.com
     APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/') # Asegurarse de que no termine con '/'
 except KeyError as e:
     print(f"Error CRÍTICO: La variable de entorno {e} no está configurada.")
-    print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID y APP_BASE_URL.")
+     print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID, FACEBOOK_PAGE_ID y APP_BASE_URL.")
     sys.exit(1)
 
 # -------------------------------
@@ -145,6 +146,37 @@ def elegir_hashtags():
     return combinados
 
 # -------------------------------
+# PUBLICACIÓN EN facebook
+# -------------------------------
+def publicar_en_facebook(facebook_page_id, access_token, image_public_url, caption):
+    graph_url_base = "https://graph.facebook.com/v19.0/"
+    # Para publicar en Facebook, se publica en el endpoint de "photos" o "feed" de la página.
+    # Usaremos el endpoint de "photos" para incluir una imagen. [2, 7]
+    post_url = f"{graph_url_base}{facebook_page_id}/photos"
+    
+    params = {
+        'url': image_public_url, # URL de la imagen
+        'caption': caption,      # Texto del post
+        'access_token': access_token
+    }
+    
+    print(f"Intentando publicar en Facebook Page con ID: {facebook_page_id}")
+    try:
+        response = requests.post(post_url, params=params)
+        response.raise_for_status() # Esto lanzará un HTTPError si la respuesta no es 200 OK
+        post_id = response.json()['id']
+        print(f"Publicación exitosa en Facebook con ID: {post_id}")
+        return True
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP al publicar en Facebook: {http_err}")
+        print(f"Respuesta del servidor (Facebook): {response.text}")
+        return False
+    except Exception as e:
+        print(f"Error inesperado publicando en Facebook: {e}")
+        return False
+
+
+# -------------------------------
 # PUBLICACIÓN EN INSTAGRAM
 # -------------------------------
 def publicar_en_instagram(instagram_account_id, access_token, image_public_url, caption):
@@ -233,6 +265,23 @@ def tarea_programada_publicar_instagram():
                 print("Error en la publicación (ver logs anteriores para más detalles).")
         else:
             print("Credenciales o APP_BASE_URL no configurados. No se puede publicar en Instagram.")
+
+     # --- Publicar en Facebook --- (NUEVO BLOQUE)
+        if FACEBOOK_PAGE_ACCESS_TOKEN and FACEBOOK_PAGE_ID and APP_BASE_URL: # Asegúrate de tener el PAGE_ID
+            print("Intentando publicar en Facebook Page...")
+            exito_facebook = publicar_en_facebook(
+                facebook_page_id=FACEBOOK_PAGE_ID,
+                access_token=FACEBOOK_PAGE_ACCESS_TOKEN,
+                image_public_url=foto_url,
+                caption=texto_post # Puedes usar el mismo caption o uno ligeramente diferente
+            )
+            if exito_facebook:
+                print("Publicación exitosa en Facebook Page.")
+            else:
+                print("Error en la publicación de Facebook (ver logs anteriores para más detalles).")
+        else:
+            print("Credenciales de Facebook Page o APP_BASE_URL no configurados. No se puede publicar en Facebook.")
+            
     except Exception as e:
         print(f"Error general en la tarea programada: {e}")
     finally:
