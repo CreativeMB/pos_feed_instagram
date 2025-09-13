@@ -10,8 +10,6 @@ import threading
 from flask import Flask, jsonify
 import pytz
 
-app = Flask(__name__)
-
 # -------------------------------
 # CONFIGURACIÓN
 # -------------------------------
@@ -20,69 +18,69 @@ WHATSAPP = "3014418502"
 WEB = "www.floristerialoslirios.com"
 CIUDAD = "Bogotá"
 NEGOCIO = "Floristería Los Lirios"
-GOOGLE_DRIVE_JSON_URL = "https://drive.google.com/uc?export=download&id=1mGqnHpLxP3mWUPHVUyJtSb9WiwRlaQ_C" # URL del JSON con las URLs de las imágenes
+
+# Configuración para imágenes locales
+STATIC_IMAGES_FOLDER_NAME = "static" # Nombre de la carpeta estática de Flask
+IMAGES_SUB_FOLDER = "images" # Subcarpeta dentro de static para las imágenes
+# Ruta completa en el sistema de archivos donde se esperan las imágenes
+FULL_STATIC_IMAGES_PATH = os.path.join(STATIC_IMAGES_FOLDER_NAME, IMAGES_SUB_FOLDER)
+
+# Inicializa la aplicación Flask, indicando dónde buscar los archivos estáticos
+app = Flask(__name__, static_folder=STATIC_IMAGES_FOLDER_NAME)
 
 try:
     FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
+    # Variable de entorno para la URL base de la aplicación desplegada
+    # EJEMPLO: https://tu-app-de-instagram.fly.dev o https://www.tudominio.com
+    APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/') # Asegurarse de que no termine con '/'
 except KeyError as e:
     print(f"Error CRÍTICO: La variable de entorno {e} no está configurada.")
+    print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID y APP_BASE_URL.")
     sys.exit(1)
 
 # -------------------------------
-# CARGAR FOTOS DESDE GOOGLE DRIVE
+# CARGAR FOTOS LOCALES
 # -------------------------------
-def cargar_fotos_desde_drive(url):
+def cargar_fotos_locales(folder_path, app_base_url):
     """
-    Carga las URLs de las fotos desde un archivo JSON alojado en Google Drive.
-    Asegura que las URLs de las imágenes sean de descarga directa (export=download).
+    Carga los nombres de archivo de las fotos desde una carpeta local
+    y construye sus URLs públicas absolutas usando la URL base de la aplicación.
     """
-    try:
-        response = requests.get(url)
-        response.raise_for_status() # Lanza un error para códigos de estado HTTP 4xx/5xx
-        data = response.json()
-        
-        corrected_urls = []
-        for key, value_url in data.items():
-            # Asegura que la URL sea de descarga directa
-            if 'export=view' in value_url:
-                corrected_url = value_url.replace('export=view', 'export=download')
-                corrected_urls.append(corrected_url)
-            elif 'export=download' not in value_url and 'id=' in value_url:
-                # Si no tiene export=view ni export=download pero sí id, intenta añadir export=download
-                # Esto es una precaución adicional, asumiendo un formato común de ID
-                parts = value_url.split('&', 1) # Divide una vez por el primer '&'
-                if len(parts) > 1 and parts[0].startswith("https://drive.google.com/uc?"):
-                    corrected_url = parts[0] + '&export=download&' + parts[1]
-                elif parts[0].startswith("https://drive.google.com/uc?"):
-                    corrected_url = parts[0] + '&export=download'
-                else: # Si no coincide con el patrón esperado, la añade como está
-                    corrected_url = value_url
-                corrected_urls.append(corrected_url)
-            else:
-                corrected_urls.append(value_url) # Ya está en formato de descarga o es otro tipo de URL
+    if not os.path.isdir(folder_path):
+        print(f"Advertencia: La carpeta de imágenes '{folder_path}' no existe. Intentando crearla.")
+        try:
+            os.makedirs(folder_path, exist_ok=True) # Crea la carpeta si no existe
+            print(f"Carpeta '{folder_path}' creada con éxito.")
+        except OSError as e:
+            raise RuntimeError(f"No se pudo crear la carpeta de imágenes '{folder_path}': {e}")
 
-        if not corrected_urls:
-            raise ValueError("JSON de Google Drive vacío o sin URLs de imagen válidas.")
-        
-        print(f"URLs de fotos cargadas con éxito. Ejemplo de URL procesada: {corrected_urls[0]}")
-        return corrected_urls
-    except requests.exceptions.RequestException as req_err:
-        print(f"Error de red o HTTP al cargar fotos desde Drive: {req_err}")
-        sys.exit(1)
-    except json.JSONDecodeError as json_err:
-        print(f"Error al decodificar el JSON de Google Drive: {json_err}")
-        sys.exit(1)
-    except ValueError as val_err:
-        print(f"Error de datos en el JSON de Google Drive: {val_err}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error inesperado al cargar fotos desde Google Drive: {e}")
-        sys.exit(1)
+    # Extensiones de imagen que se buscarán
+    image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.webp') 
+    
+    local_image_files = []
+    for f in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, f)
+        if os.path.isfile(file_path) and f.lower().endswith(image_extensions):
+            local_image_files.append(f)
 
-# Se llama a la función corregida
+    if not local_image_files:
+        raise ValueError(f"No se encontraron imágenes con extensiones {image_extensions} en la carpeta '{folder_path}'.")
+
+    public_urls = []
+    for filename in local_image_files:
+        # Construye la URL completa. Flask sirve archivos estáticos en el prefijo definido por static_url_path (por defecto '/static/')
+        # La URL será: https://APP_BASE_URL/static/images/nombre_imagen.jpg
+        full_public_url = f"{app_base_url}/{STATIC_IMAGES_FOLDER_NAME}/{IMAGES_SUB_FOLDER}/{filename}"
+        public_urls.append(full_public_url)
+    
+    print(f"Fotos locales cargadas con éxito desde '{folder_path}'. Total: {len(public_urls)} imágenes.")
+    print(f"Ejemplo de URL de imagen procesada: {public_urls[0]}")
+    return public_urls
+
+# Se llama a la función para cargar las fotos locales
 try:
-    FOTOS_PUBLICAS_URLS = cargar_fotos_desde_drive(GOOGLE_DRIVE_JSON_URL)
+    FOTOS_PUBLICAS_URLS = cargar_fotos_locales(FULL_STATIC_IMAGES_PATH, APP_BASE_URL)
 except Exception as e:
     print(f"Terminando la aplicación debido a un error al cargar las fotos: {e}")
     sys.exit(1)
@@ -167,7 +165,7 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
         print(f"Contenedor de medios creado con ID: {media_creation_id}")
     except requests.exceptions.HTTPError as http_err:
         print(f"Error HTTP al crear contenedor de medios: {http_err}")
-        print(f"Respuesta del servidor: {response_upload.text}") # Muestra la respuesta completa para depurar
+        print(f"Respuesta del servidor (subida): {response_upload.text}") # Muestra la respuesta completa para depurar
         return False
     except Exception as e:
         print(f"Error inesperado creando contenedor de medios: {e}")
@@ -184,7 +182,7 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
         return True
     except requests.exceptions.HTTPError as http_err:
         print(f"Error HTTP al publicar en Instagram: {http_err}")
-        print(f"Respuesta del servidor: {response_publish.text}")
+        print(f"Respuesta del servidor (publicación): {response_publish.text}")
         return False
     except Exception as e:
         print(f"Error inesperado publicando en Instagram: {e}")
@@ -211,7 +209,7 @@ def tarea_programada_publicar_instagram():
             json.dump(registro, f, ensure_ascii=False, indent=4)
         print(f"Información de la última publicación guardada: {registro['ultima_publicacion']}")
 
-        if FACEBOOK_PAGE_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID:
+        if FACEBOOK_PAGE_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID and APP_BASE_URL:
             exito = publicar_en_instagram(
                 instagram_account_id=INSTAGRAM_BUSINESS_ACCOUNT_ID,
                 access_token=FACEBOOK_PAGE_ACCESS_TOKEN,
@@ -223,7 +221,7 @@ def tarea_programada_publicar_instagram():
             else:
                 print("Error en la publicación (ver logs anteriores para más detalles).")
         else:
-            print("Credenciales de Facebook/Instagram no configuradas. No se puede publicar.")
+            print("Credenciales o APP_BASE_URL no configurados. No se puede publicar en Instagram.")
     except Exception as e:
         print(f"Error general en la tarea programada: {e}")
     finally:
@@ -237,7 +235,7 @@ def home():
     return jsonify({
         "status": "activo",
         "ultima_publicacion": registro.get("ultima_publicacion", "N/A"),
-        "mensaje": "El bot de publicación de Instagram está en funcionamiento."
+        "mensaje": "El bot de publicación de Instagram está en funcionamiento y sirve imágenes localmente."
     })
 
 @app.route('/publicar_ahora', methods=['GET'])
@@ -269,4 +267,6 @@ print("Scheduler iniciado. La publicación diaria está programada a las 8:10 PM
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     print(f"Iniciando servidor Flask en 0.0.0.0:{port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # Usar 'threaded=True' asegura que Flask pueda manejar peticiones mientras el scheduler está activo
+    # y el hilo de publicación manual puede ejecutarse.
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
