@@ -198,17 +198,13 @@ def tarea_programada_publicar_instagram():
         nombre_imagen = os.path.basename(foto_url)
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
-        
-        # WhatsApp clicable
-        whatsapp_link = f"https://wa.me/{WHATSAPP}"
-        # Web clicable
-        web_link = f"https://{WEB}" if not WEB.startswith("http") else WEB
-        
+
+        # Construir el caption
         texto_post = (
-            f"{encabezado}\n"
-            f"Ordena ya por WhatsApp: {whatsapp_link}\n"
+            f"{encabezado} ❤️\n\n"
+            f"Ordena ya por WhatsApp: https://wa.me/{WHATSAPP}\n"
             f"Referencia: {nombre_imagen}\n"
-            f"Visita: {web_link}\n"
+            f"Visita nuestra web: https://floristerialoslirios.com\n\n"
             + " ".join(hashtags)
         )
 
