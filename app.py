@@ -31,13 +31,12 @@ app = Flask(__name__, static_folder=STATIC_IMAGES_FOLDER_NAME)
 try:
     FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
-    FACEBOOK_PAGE_ID = os.environ["FACEBOOK_PAGE_ID"]  # <--- CORREGIDO: Alineado con las de arriba
     # Variable de entorno para la URL base de la aplicación desplegada
     # EJEMPLO: https://tu-app-de-instagram.fly.dev o https://www.tudominio.com
     APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/')
 except KeyError as e:
     print(f"Error CRÍTICO: La variable de entorno {e} no está configurada.")
-    print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID, FACEBOOK_PAGE_ID y APP_BASE_URL.") # <--- CORREGIDO: Alineado con el print de arriba
+    print("Asegúrate de definir FACEBOOK_PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID y APP_BASE_URL.") # <--- CORREGIDO: Alineado con el print de arriba
     sys.exit(1)
 # -------------------------------
 # CARGAR FOTOS LOCALES
@@ -264,22 +263,6 @@ def tarea_programada_publicar_instagram():
                 print("Error en la publicación (ver logs anteriores para más detalles).")
         else:
             print("Credenciales o APP_BASE_URL no configurados. No se puede publicar en Instagram.")
-
-     # --- Publicar en Facebook --- (NUEVO BLOQUE)
-        if FACEBOOK_PAGE_ACCESS_TOKEN and FACEBOOK_PAGE_ID and APP_BASE_URL: # Asegúrate de tener el PAGE_ID
-            print("Intentando publicar en Facebook Page...")
-            exito_facebook = publicar_en_facebook(
-                facebook_page_id=FACEBOOK_PAGE_ID,
-                access_token=FACEBOOK_PAGE_ACCESS_TOKEN,
-                image_public_url=foto_url,
-                caption=texto_post # Puedes usar el mismo caption o uno ligeramente diferente
-            )
-            if exito_facebook:
-                print("Publicación exitosa en Facebook Page.")
-            else:
-                print("Error en la publicación de Facebook (ver logs anteriores para más detalles).")
-        else:
-            print("Credenciales de Facebook Page o APP_BASE_URL no configurados. No se puede publicar en Facebook.")
             
     except Exception as e:
         print(f"Error general en la tarea programada: {e}")
