@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for pos-feed-instagram on 2025-09-12T21:36:34Z
+# fly.toml app configuration file generated for pos-feed-instagram on 2025-09-13T21:53:34Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,25 +7,6 @@ app = 'pos-feed-instagram'
 primary_region = 'bog'
 
 [build]
-  # Asegúrate de que tu Dockerfile copie ambos archivos (app.py y scheduler.py)
-  # junto con tus archivos de contenido (encabezados.txt, hashtags.txt, static/images)
-  # e instale todas las dependencias Python necesarias (Flask, apscheduler, requests, pytz).
-  # Ejemplo básico en tu Dockerfile:
-  # FROM python:3.9-slim-buster
-  # WORKDIR /app
-  # COPY requirements.txt .
-  # RUN pip install -r requirements.txt
-  # COPY . .
-  # ENV PYTHONUNBUFFERED=1
-
-[processes]
-  # Define el proceso 'app' para tu aplicación Flask.
-  # El comando 'python app.py' iniciará tu servidor Flask.
-  app = "python app.py"
-
-  # Define el proceso 'scheduler' para tu script de APScheduler.
-  # El comando 'python scheduler.py' iniciará tu programador de tareas.
-  scheduler = "python scheduler.py"
 
 [http_service]
   internal_port = 8080
@@ -33,23 +14,10 @@ primary_region = 'bog'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  # Solo el proceso 'app' manejará las solicitudes HTTP entrantes.
   processes = ['app']
 
-# Configuración de la VM por defecto. Esto se aplicará a AMBOS grupos de procesos
-# (app y scheduler) a menos que se especifique lo contrario con 'process_groups'.
 [[vm]]
-  memory = '2gb' # Ajustado a '2gb' para ser consistente con memory_mb
+  memory = '2gb'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 2048
-
-# Opcional: Si deseas asignar diferentes recursos al proceso 'scheduler',
-# puedes definir una sección [[vm]] separada para él.
-# Por ejemplo, el scheduler podría necesitar menos recursos si solo ejecuta tareas puntuales.
-# [[vm]]
-#   process_groups = ["scheduler"]
-#   memory = '512mb'
-#   cpu_kind = 'shared'
-#   cpus = 1
-#   memory_mb = 512
