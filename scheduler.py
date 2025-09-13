@@ -5,21 +5,21 @@ import pytz
 
 scheduler = BlockingScheduler()
 
-# Job programado diario
+# Job programado diario para las 6:00 PM (Hora de Bogotá)
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger=CronTrigger(hour=16, minute=25, timezone=pytz.timezone("America/Bogota")),
+    trigger=CronTrigger(hour=18, minute=0, timezone=pytz.timezone("America/Bogota")),
     id='instagram_daily_post',
     replace_existing=True
 )
 
-# Job que se ejecuta inmediatamente al arrancar
-#scheduler.add_job(
-  #  tarea_programada_publicar_instagram,
-   # trigger='date',  # Se ejecuta solo una vez
-  #  id='instagram_immediate_post',
-  #  replace_existing=True
-#)
+# Job que se ejecuta inmediatamente al arrancar (mantenerlo para el primer inicio)
+scheduler.add_job(
+    tarea_programada_publicar_instagram,
+    trigger='date',  # Se ejecuta solo una vez
+    id='instagram_immediate_post',
+    replace_existing=True
+)
 
-print("Scheduler iniciado. Publicación diaria programada y disparo inmediato en curso.")
+print("Scheduler iniciado. Publicación diaria programada (6:00 PM Bogotá) y disparo inmediato en curso.")
 scheduler.start()
