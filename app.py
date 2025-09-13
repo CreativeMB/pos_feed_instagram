@@ -1,3 +1,5 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 import random
 import json
 import os
@@ -7,7 +9,7 @@ import sys
 import threading
 from flask import Flask, jsonify
 import pytz
-from main_app import tarea_programada_publicar_instagram  # Solo la función de publicación
+
 # -------------------------------
 # CONFIGURACIÓN
 # -------------------------------
@@ -193,14 +195,12 @@ def tarea_programada_publicar_instagram():
     print(f"\n--- INICIANDO PUBLICACIÓN ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
     try:
         foto_url = elegir_foto()
-        nombre_imagen = os.path.basename(foto_url)
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
         texto_post = f"{encabezado}\nOrdena ya por WhatsApp {WHATSAPP}\n{WEB}\n" + " ".join(hashtags)
 
         registro["ultima_publicacion"] = {
             "foto": foto_url,
-            "nombre_imagen": nombre_imagen,
             "encabezado": encabezado,
             "hashtags": hashtags,
             "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -246,6 +246,20 @@ def trigger_manual_post():
         "message": "Publicación disparada manualmente. Revisa los logs de la aplicación para el estado."
     }), 202
 
+# -------------------------------
+# SCHEDULER CON CRON TRIGGER
+# -------------------------------
+scheduler = BackgroundScheduler()
+# Publicación diaria a las 8:10 PM hora Colombia
+scheduler.add_job(
+    tarea_programada_publicar_instagram,
+    trigger=CronTrigger(hour=20, minute=10, timezone=pytz.timezone("America/Bogota")),
+    id='instagram_daily_post',
+    name='Publicación diaria a las 8:10 PM (hora Colombia)',
+    replace_existing=True
+)
+scheduler.start()
+print("Scheduler iniciado. La publicación diaria está programada a las 8:10 PM hora Colombia.")
 
 # -------------------------------
 # INICIO DEL SERVIDOR FLASK
