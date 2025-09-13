@@ -250,16 +250,18 @@ def trigger_manual_post():
 # SCHEDULER CON CRON TRIGGER
 # -------------------------------
 scheduler = BackgroundScheduler()
-# Publicación diaria a las 8:10 PM hora Colombia
+
+# Publicación diaria a las 12:10 PM hora Colombia
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger=CronTrigger(hour=11, minute=55, timezone=pytz.timezone("America/Bogota")),
+    trigger=CronTrigger(hour=12, minute=10, timezone=pytz.timezone("America/Bogota")),
     id='instagram_daily_post',
-    name='Publicación diaria a las 8:10 PM (hora Colombia)',
+    name='Publicación diaria a las 12:10 PM (hora Colombia)',
     replace_existing=True
 )
+
 scheduler.start()
-print("Scheduler iniciado. La publicación diaria está programada a las 8:10 PM hora Colombia.")
+print("Scheduler iniciado. La publicación diaria está programada a las 12:10 PM hora Colombia.")
 
 # -------------------------------
 # INICIO DEL SERVIDOR FLASK
