@@ -17,8 +17,8 @@ scheduler.add_job(
 # Job que se ejecuta inmediatamente al arrancar (mantenerlo para el primer inicio)
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger='date',  # Se ejecuta solo una vez
-     run_date=datetime.now(),
+    trigger='date',
+    run_date=datetime.now(), # Esto asegura que se le da una nueva fecha "ahora" en cada arranque
     id='instagram_immediate_post',
     replace_existing=True
 )
