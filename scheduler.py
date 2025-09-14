@@ -8,7 +8,7 @@ scheduler = BlockingScheduler()
 # Job programado diario para las 6:00 PM (Hora de Bogotá)
 scheduler.add_job(
     tarea_programada_publicar_instagram,
-    trigger=CronTrigger(hour=18, minute=0, timezone=pytz.timezone("America/Bogota")),
+    trigger=CronTrigger(hour=19, minute=30, timezone=pytz.timezone("America/Bogota")),
     id='instagram_daily_post',
     replace_existing=True
 )
