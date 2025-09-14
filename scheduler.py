@@ -17,6 +17,7 @@ scheduler.add_job(
 scheduler.add_job(
     tarea_programada_publicar_instagram,
     trigger='date',  # Se ejecuta solo una vez
+     run_date=datetime.now(),
     id='instagram_immediate_post',
     replace_existing=True
 )
