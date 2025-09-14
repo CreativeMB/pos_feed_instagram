@@ -31,8 +31,6 @@ app = Flask(__name__, static_folder=STATIC_IMAGES_FOLDER_NAME)
 try:
     FACEBOOK_PAGE_ACCESS_TOKEN = os.environ["FACEBOOK_PAGE_ACCESS_TOKEN"]
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.environ["INSTAGRAM_BUSINESS_ACCOUNT_ID"]
-    # Variable de entorno para la URL base de la aplicación desplegada
-    # EJEMPLO: https://tu-app-de-instagram.fly.dev o https://www.tudominio.com
     APP_BASE_URL = os.environ["APP_BASE_URL"].rstrip('/')
 except KeyError as e:
     print(f"Error CRÍTICO: La variable de entorno {e} no está configurada.")
@@ -186,10 +184,6 @@ def publicar_en_instagram(instagram_account_id, access_token, image_public_url, 
     except Exception as e:
         print(f"Error inesperado publicando en Instagram: {e}")
         return False
-
-# -------------------------------
-# FUNCIÓN PRINCIPAL DE PUBLICACIÓN
-# -------------------------------
 # -------------------------------
 # FUNCIÓN PRINCIPAL DE PUBLICACIÓN
 # -------------------------------
@@ -197,12 +191,10 @@ def tarea_programada_publicar_instagram():
     print(f"\n--- INICIANDO PUBLICACIÓN ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---")
     try:
         foto_url = elegir_foto()
-        # Obtener solo el nombre sin extensión
         nombre_imagen = os.path.splitext(os.path.basename(foto_url))[0]
         encabezado = elegir_encabezado()
         hashtags = elegir_hashtags()
 
-        # Construir el caption
         texto_post = (
             f"{encabezado}\n"
             f"Ordena ya por WhatsApp: {WHATSAPP}\n"
