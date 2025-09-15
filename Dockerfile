@@ -1,19 +1,24 @@
-# Usa una imagen base oficial de Python
 FROM python:3.9-slim-buster
 
-# Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia el archivo requirements.txt primero para aprovechar el cache de Docker
+# Instalar dependencias de Python
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Instala las dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copia el resto de tu aplicación al directorio de trabajo
-# Esto incluye app.py, encabezados.txt, hashtags.txt y registro_publicaciones.json
+# Copiar tu aplicación
 COPY . .
 
-# Comando para ejecutar tu script cuando el contenedor se inicie
-# Ahora ejecutará el servidor Flask que a su vez maneja la programación
-CMD ["python", "app.py"]
+# Descargar Supercronic
+RUN apt-get update && apt-get install -y curl && \
+    curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 && \
+    chmod +x /usr/local/bin/supercronic
+
+# Copiar el archivo de cron
+COPY crontab /etc/crontab
+
+# Puerto interno de tu app Flask
+EXPOSE 8080
+
+# Comando por defecto: correr supercronic + tu app
+CMD supercronic /etc/crontab
