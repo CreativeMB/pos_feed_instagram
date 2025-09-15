@@ -2,5 +2,6 @@
 __pycache__
 *.pyc
 venv
+static/images
 .env
 .DS_Store
