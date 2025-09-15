@@ -1,24 +1,31 @@
-FROM python:3.9-slim-buster
+# 1️⃣ Imagen base ligera de Python
+FROM python:3.9-slim
 
+# 2️⃣ Configurar directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias de Python
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# 3️⃣ Instalar dependencias de sistema necesarias
+RUN apt-get update && apt-get install -y curl && apt-get clean
 
-# Copiar tu aplicación
+# 4️⃣ Copiar y instalar dependencias de Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 5️⃣ Copiar la aplicación
 COPY . .
 
-# Descargar Supercronic
-RUN apt-get update && apt-get install -y curl && \
-    curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 && \
-    chmod +x /usr/local/bin/supercronic
+# 6️⃣ Descargar Supercronic
+RUN curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 \
+    && chmod +x /usr/local/bin/supercronic
 
-# Copiar el archivo de cron
-COPY crontab /etc/crontab
+# 7️⃣ Copiar el crontab (ya lo creaste sin extensión)
+#    Asegúrate de que el archivo se llame "crontab" en la raíz de tu proyecto
+COPY crontab /app/crontab
 
-# Puerto interno de tu app Flask
+# 8️⃣ Exponer el puerto de Flask
 EXPOSE 8080
 
-# Comando por defecto: correr supercronic + tu app
-CMD supercronic /etc/crontab
+# 9️⃣ Comando por defecto: correr Flask + Supercronic
+#    Supercronic corre en segundo plano, Flask en primer plano
+CMD supercronic /app/crontab & python app.py
+
