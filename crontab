@@ -1,5 +1,5 @@
-* * * * * echo "CRON WORKS $(date)" >> /app/cron_test.log
-17 13 * * * curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+* * * * * curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+
 
 # Ejemplo de otras horas: 6 PM y 9 PM
 0 18 * * * curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
