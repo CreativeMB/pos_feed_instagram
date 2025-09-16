@@ -4,10 +4,14 @@ FROM python:3.9-slim
 # 2️⃣ Configurar directorio de trabajo
 WORKDIR /app
 
-# 3️⃣ Instalar dependencias de sistema necesarias
-RUN apt-get update && apt-get install -y curl && apt-get clean
+# 3️⃣ Instalar dependencias de sistema necesarias + tzdata
+RUN apt-get update && \
+    apt-get install -y curl tzdata && \
+    ln -snf /usr/share/zoneinfo/America/Bogota /etc/localtime && \
+    echo "America/Bogota" > /etc/timezone && \
+    apt-get clean
 
-# 4️⃣ Copiar y instalar dependencias de Python
+# 4️⃣ Copiar e instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -26,7 +30,3 @@ EXPOSE 8080
 
 # 9️⃣ Ejecutar Supercronic + Flask usando shell
 CMD ["sh", "-c", "supercronic /app/crontab & python app.py"]
-# Establecer hora Bogotá
-ENV TZ=America/Bogota
-RUN apt-get update && apt-get install -y tzdata
-
