@@ -1,6 +1,8 @@
-# Cada minuto para prueba de logs
-* * * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - CRON test ejecutado" >> /proc/1/fd/1 2>&1
+# Prueba: cada minuto debe mostrar un log
+* * * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - CRON test ejecutado"
 
-# Publicaciones reales programadas a 6 AM y 6 PM
-0 6 * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Publicar 6:00" >> /proc/1/fd/1 2>&1 && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
-0 18 * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Publicar 18:00" >> /proc/1/fd/1 2>&1 && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+# Publicación a la 1 PM Bogotá
+0 13 * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Publicar 13:00" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+
+# Publicación a las 6 PM Bogotá
+0 18 * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Publicar 18:00" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
