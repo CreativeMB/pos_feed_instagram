@@ -12,9 +12,10 @@ until curl -s http://localhost:8080/ >/dev/null 2>&1; do
 done
 echo ">>> Flask está listo."
 
-# 🔥 Disparar inicialización automática
-echo ">>> Ejecutando inicialización automática..."
-curl -s http://localhost:8080/publicar_ahora || true
+# 🔥 Publicación inicial para confirmar despliegue
+echo ">>> Ejecutando publicación inicial tras el despliegue..."
+RESPUESTA=$(curl -s http://localhost:8080/publicar_ahora || true)
+echo ">>> Respuesta inicial: $RESPUESTA"
 
 # Lanzar supercronic en primer plano (cron jobs)
 exec /usr/local/bin/supercronic /app/crontab
