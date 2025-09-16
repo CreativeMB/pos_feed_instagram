@@ -1,7 +1,0 @@
-.git
-__pycache__
-*.pyc
-venv
-static/images
-.env
-.DS_Store
