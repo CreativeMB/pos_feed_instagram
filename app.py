@@ -265,11 +265,6 @@ def trigger_manual_post():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     print(f"Iniciando servidor Flask en 0.0.0.0:{port}")
-    # Usar 'threaded=True' asegura que Flask pueda manejar peticiones mientras el scheduler está activo
-    # y el hilo de publicación manual puede ejecutarse.
-    if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8080))
-    print(f"Iniciando servidor Flask en 0.0.0.0:{port}")
 
     # 🔥 Publicación inicial al arranque
     try:
@@ -278,4 +273,7 @@ if __name__ == '__main__':
         print("✅ Publicación inicial completada correctamente.")
     except Exception as e:
         print(f"❌ Error en la publicación inicial: {e}")
+
+    # Iniciar Flask
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+
