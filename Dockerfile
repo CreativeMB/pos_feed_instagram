@@ -26,3 +26,7 @@ EXPOSE 8080
 
 # 9️⃣ Ejecutar Supercronic + Flask usando shell
 CMD ["sh", "-c", "supercronic /app/crontab & python app.py"]
+# Establecer hora Bogotá
+ENV TZ=America/Bogota
+RUN apt-get update && apt-get install -y tzdata
+
