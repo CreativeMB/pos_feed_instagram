@@ -262,19 +262,28 @@ def trigger_manual_post():
 # -------------------------------
 # INICIO DEL SERVIDOR FLASK
 # -------------------------------
+# -------------------------------
+# INICIO DEL SERVIDOR FLASK
+# -------------------------------
 if __name__ == "__main__":
+    import threading
+
     port = int(os.environ.get("PORT", 8080))
     print(f"Iniciando servidor Flask en 0.0.0.0:{port}")
 
-    # 🔥 Publicación inicial al arranque
-    try:
-        print(">>> 🚀 Ejecutando publicación inicial de despliegue...")
-        tarea_programada_publicar_instagram()
-        print("✅ Publicación inicial completada correctamente.")
-    except Exception as e:
-        print(f"❌ Error en la publicación inicial: {e}")
+    # 🔥 Publicación inicial en cada despliegue (no bloquea Flask)
+    def publicar_inicial():
+        try:
+            print(">>> 🚀 Ejecutando publicación inicial de despliegue...")
+            tarea_programada_publicar_instagram()
+            print("✅ Publicación inicial completada correctamente.")
+        except Exception as e:
+            print(f"❌ Error en la publicación inicial: {e}")
 
-    # Arrancar Flask
+    # Se lanza en segundo plano
+    threading.Thread(target=publicar_inicial, daemon=True).start()
+
+    # ✅ Flask arranca inmediatamente
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
 
