@@ -1,5 +1,5 @@
 # A las 3:00 PM
-6 15 * * * echo "Cron ejecutado a las 15:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+12 15 * * * echo "Cron ejecutado a las 15:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
 
 # A las 5:00 PM
 0 17 * * * echo "Cron ejecutado a las 17:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
