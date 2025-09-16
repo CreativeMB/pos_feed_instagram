@@ -1,11 +1,10 @@
 #!/bin/bash
 set -e
 
-# Iniciar cron en segundo plano
-cron
+echo ">>> Iniciando aplicación con Supercronic + Flask (zona horaria: $TZ)"
 
-# Mostrar logs de cron en la salida estándar
-tail -f /var/log/cron.log &
+# Lanzar Flask en segundo plano
+python app.py &
 
-# Iniciar Flask en primer plano
-exec python app.py
+# Lanzar supercronic con el archivo crontab (en primer plano para que Fly capture logs)
+exec /usr/local/bin/supercronic /app/crontab
