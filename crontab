@@ -1,5 +1,5 @@
 # Ejecutar cada minuto para prueba y mostrar log en Fly.io
-* * * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Ejecutando publicar_ahora" && curl https://pos-feed-instagram.fly.dev/publicar_ahora
+* * * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Ejecutando publicar_ahora" >> /proc/1/fd/1 2>&1 && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora >> /proc/1/fd/1 2>&1
 
 # Publicaciones programadas a 6 AM y 6 PM
 0 6 * * * echo "$(date '+%Y-%m-%d %H:%M:%S') - Ejecutando publicar_ahora 18:00" && curl https://pos-feed-instagram.fly.dev/publicar_ahora
