@@ -4,10 +4,10 @@ FROM python:3.9-slim
 # Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema necesarias
 RUN apt-get update && \
     apt-get install -y curl tzdata && \
-    apt-get clean
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Configurar zona horaria Bogotá
 ENV TZ=America/Bogota
@@ -24,8 +24,7 @@ COPY . .
 RUN curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 \
     && chmod +x /usr/local/bin/supercronic
 
-
-# Dar permisos al script de inicio
+# Copiar start.sh y dar permisos
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
@@ -35,5 +34,5 @@ COPY crontab /app/crontab
 # Exponer el puerto de Flask
 EXPOSE 8080
 
-# Ejecutar start.sh
+# Ejecutar start.sh como entrypoint
 CMD ["/app/start.sh"]
