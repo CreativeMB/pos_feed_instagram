@@ -1,1 +1,2 @@
-00 18 * * * curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+45 17 * * * curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+
