@@ -24,5 +24,5 @@ COPY crontab /app/crontab
 # 8️⃣ Exponer el puerto de Flask
 EXPOSE 8080
 
-# 9️⃣ Comando por defecto (usar shell para que funcione el &)
+# ✅ Llama a bash para poder usar "&"
 CMD ["sh", "-c", "supercronic /app/crontab & python app.py"]
