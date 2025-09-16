@@ -14,8 +14,8 @@ primary_region = "bog"
   processes = ["app"]
 
 [processes]
-# Proceso principal de tu app (Flask + crontab)
-app = "sh -c \"supercronic /app/crontab & python app.py\""
+app = "/app/start.sh"
+
 
 
 [[vm]]
