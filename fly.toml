@@ -14,8 +14,9 @@ primary_region = "bog"
   processes = ["app"]
 
 [processes]
-  # Proceso principal de tu app (Flask)
-  app = "supercronic /app/crontab & python app.py"
+# Proceso principal de tu app (Flask + crontab)
+app = "sh -c \"supercronic /app/crontab & python app.py\""
+
 
 [[vm]]
   memory = "2gb"
