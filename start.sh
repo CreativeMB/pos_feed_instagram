@@ -2,5 +2,5 @@
 # Ejecutar Flask en segundo plano
 python app.py &
 
-# Ejecutar Supercronic en primer plano (logs aparecerán en fly logs)
-exec supercronic /app/crontab
+# Ejecutar Supercronic en primer plano (logs visibles en Fly)
+exec /usr/local/bin/supercronic /app/crontab
