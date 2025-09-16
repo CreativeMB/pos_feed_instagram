@@ -1,5 +1,5 @@
 # 3:25 PM hora Bogotá
-36 15 * * * echo "Cron ejecutado a las 15:25 $(date)" && curl -s http://localhost:8080/publicar_ahora
+50 15 * * * echo "Cron ejecutado a las 15:25 $(date)" && curl -s http://localhost:8080/publicar_ahora
 
 # 6:00 AM todos los días
 0 6 * * * echo "Cron ejecutado a las 06:00 $(date)" && curl -s http://localhost:8080/publicar_ahora
