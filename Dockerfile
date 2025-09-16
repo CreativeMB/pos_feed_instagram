@@ -21,9 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Descargar Supercronic y dar permisos
-RUN curl -L -o /usr/local/bin/supercronic \
-    https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 && \
-    chmod +x /usr/local/bin/supercronic
+RUN curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 \
+    && chmod +x /usr/local/bin/supercronic
+
 
 # Dar permisos al script de inicio
 COPY start.sh /app/start.sh
