@@ -1,6 +1,5 @@
-#!/bin/sh
-# Ejecutar Flask en segundo plano
-python app.py &
+# Ejecutar supercronic en segundo plano
+supercronic /app/crontab &
+# Ejecutar Flask en primer plano
+exec python app.py
 
-# Ejecutar Supercronic en primer plano (logs visibles en Fly)
-exec /usr/local/bin/supercronic /app/crontab
