@@ -7,7 +7,7 @@ WORKDIR /app
 # 3️⃣ Instalar dependencias de sistema necesarias
 RUN apt-get update && apt-get install -y curl && apt-get clean
 
-# 4️⃣ Copiar y instalar dependencias de Python
+# 4️⃣ Copiar e instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -18,14 +18,11 @@ COPY . .
 RUN curl -L -o /usr/local/bin/supercronic https://github.com/aptible/supercronic/releases/download/v0.2.4/supercronic-linux-amd64 \
     && chmod +x /usr/local/bin/supercronic
 
-# 7️⃣ Copiar el crontab (ya lo creaste sin extensión)
-#    Asegúrate de que el archivo se llame "crontab" en la raíz de tu proyecto
+# 7️⃣ Copiar el crontab
 COPY crontab /app/crontab
 
 # 8️⃣ Exponer el puerto de Flask
 EXPOSE 8080
 
-# 9️⃣ Comando por defecto: correr Flask + Supercronic
-#    Supercronic corre en segundo plano, Flask en primer plano
-CMD supercronic /app/crontab & python app.py
-
+# 9️⃣ Comando por defecto (usar shell para que funcione el &)
+CMD ["sh", "-c", "supercronic /app/crontab & python app.py"]
