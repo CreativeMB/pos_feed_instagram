@@ -262,7 +262,7 @@ def trigger_manual_post():
 # -------------------------------
 # INICIO DEL SERVIDOR FLASK
 # -------------------------------
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     print(f"Iniciando servidor Flask en 0.0.0.0:{port}")
 
@@ -274,6 +274,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"❌ Error en la publicación inicial: {e}")
 
-    # Iniciar Flask
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    # Arrancar Flask
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+
 
