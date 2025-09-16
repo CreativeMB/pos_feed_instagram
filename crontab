@@ -1,6 +1,9 @@
-# Cada minuto -> solo para pruebas (ver logs en Fly)
-* * * * * echo "Cron ejecutado a $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+# A las 3:00 PM
+0 15 * * * echo "Cron ejecutado a las 15:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
 
-# A las 6 PM y 9 PM -> producción
+# A las 5:00 PM
+0 17 * * * echo "Cron ejecutado a las 17:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
+
+# A las 6 PM y 9 PM (producción original)
 0 18 * * * echo "Cron ejecutado a las 18:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
 0 21 * * * echo "Cron ejecutado a las 21:00 $(date)" && curl -s https://pos-feed-instagram.fly.dev/publicar_ahora
